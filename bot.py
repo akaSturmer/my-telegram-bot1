@@ -1,55 +1,46 @@
 import requests
-import csv
-import io
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-# === ЗАМЕНИ НА СВОИ ДАННЫЕ ===
+# === ТВОИ ДАННЫЕ (уже вставлены) ===
 TELEGRAM_TOKEN = "7426748624:AAGHSRTPl3mkK6rVXN86lbaQN5Y1mCv17YE"
 GROQ_API_KEY = "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"
-GOOGLE_SHEETS_CSV_URL = "https://drive.google.com/file/d/13s7ZCc7VhHqs4IZlqaQ7n8VuX4P7jEA8/view?usp=sharing"
 
-# === ЗАГРУЗКА ТОВАРОВ ИЗ GOOGLE ТАБЛИЦЫ ===
-def load_products():
-    try:
-        r = requests.get(GOOGLE_SHEETS_CSV_URL)
-        r.encoding = 'utf-8'
-        reader = csv.DictReader(io.StringIO(r.text))
-        return list(reader)
-    except Exception as e:
-        print("Ошибка загрузки товаров:", e)
-        return []
+# === ВСТРОЕННАЯ БАЗА ТОВАРОВ (вместо CSV) ===
+PRODUCTS = [
+    {
+        "Имя": "Клей-пена профессиональная ТЕХНОНИКОЛЬ для кладки блоков 700 мл",
+        "Артикул": "303000000",
+        "Описание": "Клей-Цемент ТЕХНОНИКОЛЬ MASTER — однокомпонентный полиуретановый клей. Подходит для кладки из газобетонных, керамических блоков. Температура применения: от -10°C до +35°C.",
+        "Подходит для": "блоки, газобетон, перегородки, керамика, стены",
+        "Ссылка": "https://baucenter.ru/product/kley-pena-professionalnaya-tekhnonikol-dlya-kladki-blokov-700-ml-ctg-36829-36841-38020-303000000/"
+    }
+    # Добавляй сюда новые товары по такому же шаблону
+]
 
-# === КОМАНДА /start ===
+# === /start ===
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Привет! Напиши, что нужно склеить, или задай вопрос о товаре."
     )
 
-# === ОБРАБОТКА СООБЩЕНИЙ ===
+# === Обработка сообщений ===
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text.lower()
-    products = load_products()
-
-    if not products:
-        await update.message.reply_text("Сейчас не могу загрузить товары. Попробуй позже.")
-        return
 
     # Поиск по "Подходит для"
     matches = []
-    for p in products:
+    for p in PRODUCTS:
         suitable = p.get("Подходит для", "").lower()
         for keyword in suitable.split(","):
             if keyword.strip() in user_text:
                 matches.append(p)
                 break
 
-    # Если нашли — покажем товары
+    # Показываем товары
     if matches:
         response = "Подходящие товары:\n\n"
         for p in matches:
-            print("КЛЮЧИ В p:", list(p.keys()))
-            print("ПОЛНЫЙ ТОВАР:", p)
             name = p["Имя"]
             sku = p["Артикул"]
             link = p["Ссылка"]
@@ -58,11 +49,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_html(response)
     else:
         # Спросим у ИИ
-        prompt = f"Пользователь спрашивает: '{user_text}'. Вот товары: {products}. Подскажи, что подойдёт."
+        prompt = f"Пользователь спрашивает: '{user_text}'. Вот наши товары: {PRODUCTS}. Подскажи, что может подойти."
         ai_response = get_ai_response(prompt)
         await update.message.reply_text(ai_response)
 
-# === ЗАПРОС К GROQ (ИИ) ===
+# === Запрос к Groq (ИИ) ===
 def get_ai_response(prompt):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
@@ -79,16 +70,14 @@ def get_ai_response(prompt):
         if r.status_code == 200:
             return r.json()["choices"][0]["message"]["content"]
         else:
-            return "Пока не могу ответить. Попробуй позже."
+            return "Не могу ответить. Попробуй позже."
     except Exception as e:
         return f"Ошибка: {str(e)}"
 
-# === ЗАПУСК БОТА ===
+# === Запуск бота ===
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("Бот запущен...")
+    print("✅ Бот запущен...")
     app.run_polling()
-
-
