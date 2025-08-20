@@ -48,6 +48,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if matches:
         response = "Подходящие товары:\n\n"
         for p in matches:
+            print("КЛЮЧИ В p:", list(p.keys()))
+            print("ПОЛНЫЙ ТОВАР:", p)
             name = p["Имя"]
             sku = p["Артикул"]
             link = p["Ссылка"]
@@ -88,4 +90,5 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("Бот запущен...")
     app.run_polling()
+
 
