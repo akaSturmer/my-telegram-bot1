@@ -7,7 +7,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 # === ЗАМЕНИ НА СВОИ ДАННЫЕ ===
 TELEGRAM_TOKEN = "7426748624:AAGHSRTPl3mkK6rVXN86lbaQN5Y1mCv17YE"
 GROQ_API_KEY = "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"
-GOOGLE_SHEETS_CSV_URL = "https://drive.google.com/file/d/1-0lkI-amiiz8TDcMt0TiVqVBkD73dV_B/view?usp=drivesdk"
+GOOGLE_SHEETS_CSV_URL = "https://drive.google.com/file/d/13s7ZCc7VhHqs4IZlqaQ7n8VuX4P7jEA8/view?usp=sharing"
 
 # === ЗАГРУЗКА ТОВАРОВ ИЗ GOOGLE ТАБЛИЦЫ ===
 def load_products():
@@ -88,3 +88,4 @@ if __name__ == '__main__':
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("Бот запущен...")
     app.run_polling()
+
